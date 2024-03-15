@@ -10,11 +10,27 @@ then
     OUTNAME=$4
     RESULT_FOLDER=$5
 
-    retesteth -t $TESTS_TYPE -- --testfile $TESTS --clients evmone --testpath /dev/null
-    lcov --capture --directory $BUILD --output-file $BUILD/coverage.lcov --ignore-errors mismatch  --exclude="$HOME/.hunter/*" --exclude="$PWD/_deps/*"  --exclude="11" --exclude="state" --exclude="statetest"	--exclude="t8n"	--exclude="unittests" --exclude="utils"
-    lcov --zerocounters --directory $BUILD
-    genhtml $BUILD/coverage.lcov --output-directory $RESULT_FOLDER/$OUTNAME --title $OUTNAME_COVERAGE
-    cp $BUILD/coverage.lcov $RESULT_FOLDER/coverage_$OUT.lcov
+
+    cmd="retesteth -t $TESTS_TYPE -- --testfile $TESTS --clients evmone --testpath /dev/null"
+    echo "$cmd"
+    eval "$cmd"
+
+    cmd="lcov --capture --directory $BUILD --output-file $BUILD/coverage.lcov --ignore-errors mismatch  --exclude=\"$HOME/.hunter/*\" --exclude=\"$PWD/_deps/*\"  --exclude=\"11\" --exclude=\"state\" --exclude=\"statetest\"	--exclude=\"t8n\"	--exclude=\"unittests\" --exclude=\"utils\""
+    echo "$cmd"
+    eval "$cmd"
+
+    cmd="lcov --zerocounters --directory $BUILD"
+    echo "$cmd"
+    eval "$cmd"
+
+    cmd="genhtml $BUILD/coverage.lcov --output-directory $RESULT_FOLDER/$OUTNAME --title \"${OUTNAME}_COVERAGE\""
+    echo "$cmd"
+    eval "$cmd"
+
+    cmd="cp $BUILD/coverage.lcov $RESULT_FOLDER/coverage_${OUTNAME}.lcov"
+
+    echo "$cmd"
+    eval "$cmd"
 fi
 
 if [ $MOD == "diff" ];
@@ -22,7 +38,9 @@ then
     FILE1=$2
     FILE2=$3
     RESULT_FOLDER=$4
-    genhtml $RESULT_FOLDER/$FILE1 --baseline-file $RESULT_FOLDER/$FILE2 --output-directory $RESULT_FOLDER/DIFF --title DIFF_COVERAGE
+    cmd="genhtml $RESULT_FOLDER/$FILE1 --baseline-file $RESULT_FOLDER/$FILE2 --output-directory $RESULT_FOLDER/DIFF --title DIFF_COVERAGE"
+    echo "$cmd"
+    eval "$cmd"
 fi
 
 
