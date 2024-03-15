@@ -43,15 +43,12 @@ testB=$2
 typeC=$3
 testpath=$(pwd)/coverage
 
-if [ ! -d $testpath/BASE_TESTS ]; then
-    mkdir -p $testpath/BASE_TESTS
-fi
-if [ ! -d $testpath/PATCH_TESTS ]; then
-    mkdir -p $testpath/PATCH_TESTS
-fi
-if [ ! -d $testpath/DIFF ]; then
-    mkdir -p $testpath/DIFF
-fi
+dirs=("BASE_TESTS" "PATCH_TESTS" "DIFF" "BASE" "PATCH")
+for dir in "${dirs[@]}"; do
+    dirpath="$testpath/$dir"
+    rm -rf "$dirpath"
+    mkdir -p "$dirpath"
+done
 
 cp $testA/* $testpath/BASE_TESTS
 cp $testB/* $testpath/PATCH_TESTS
