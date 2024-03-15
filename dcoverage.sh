@@ -52,7 +52,7 @@ done
 
 cp $testA/* $testpath/BASE_TESTS
 cp $testB/* $testpath/PATCH_TESTS
-argstring="/tests/BASE_TESTS /tests/PATCH_TESTS /tests $typeC"
+argstring="cover /tests/BASE_TESTS $typeC BASE /tests"
 docker run -v $testpath:/tests evmonecoverage $argstring
 
 rm -r $testpath/BASE_TESTS

@@ -52,7 +52,7 @@ RUN wget https://github.com/linux-test-project/lcov/releases/download/v2.0/lcov-
     && ln -s /lcov-2.0/bin/lcov /usr/bin/lcov \
     && ln -s /lcov-2.0/bin/genhtml /usr/bin/genhtml
 
-RUN wget https://raw.githubusercontent.com/ethereum/retesteth/develop/web/evmone_coverage.sh \
+RUN wget https://raw.githubusercontent.com/winsvega/evmtest_coverage/main/evmone_coverage.sh \
     && cp evmone_coverage.sh /usr/bin/evmone_coverage.sh \
     && chmod +x /usr/bin/evmone_coverage.sh
 
