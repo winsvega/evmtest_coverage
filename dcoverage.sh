@@ -48,6 +48,7 @@ base=""
 patch=""
 testType=""
 onlypatch=0
+testrepo=0
 
 # Loop through all the arguments
 while [ "$#" -gt 0 ]; do
@@ -68,6 +69,10 @@ while [ "$#" -gt 0 ]; do
             onlypatch=1  # Set the flag to 1 (on)
             shift
             ;;
+        --testrepo)
+            testrepo=1
+            shift
+            ;;
         *)          # Match any other argument
             echo "Unknown option: $1"
             exit 1
@@ -75,18 +80,20 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-if [[ -z "$base" || -z "$patch" || -z "$testType" ]]; then
-    echo "Error: Missing options!"
-    printHelp
-fi
-
-
-#echo "Base: $base"
-#echo "Patch: $patch"
-#echo "Type: $testType"
-#echo "OnlyPatch: $onlypatch"
 
 testpath=$(pwd)/coverage
+if [[ -z "$base" || -z "$patch" || -z "$testType" ]]; then
+    if [ $testrepo -eq 0 ]; then
+        echo "Error: Missing options!"
+        printHelp
+    else
+        argstring="/tests/evmone_coverage.sh covertests /tests/tests $testType TESTREPO /tests"
+        docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
+        user=$(whoami)
+        sudo chown -R $user:$user $testpath
+        exit 0
+    fi
+fi
 
 
 if [ $onlypatch -eq 1 ]; then
@@ -107,16 +114,15 @@ else
     cp $base/* $testpath/BASE_TESTS
     cp $patch/* $testpath/PATCH_TESTS
 
-    argstring="cover /tests/BASE_TESTS $testType BASE /tests"
-    docker run -v $testpath:/tests evmonecoverage $argstring
+    argstring="/tests/evmone_coverage.sh cover /tests/BASE_TESTS $testType BASE /tests"
+    docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 fi
 
+argstring="/tests/evmone_coverage.sh cover /tests/PATCH_TESTS $testType PATCH /tests"
+docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 
-argstring="cover /tests/PATCH_TESTS $testType PATCH /tests"
-docker run -v $testpath:/tests evmonecoverage $argstring
-
-argstring="diff coverage_PATCH.lcov coverage_BASE.lcov /tests"
-docker run -v $testpath:/tests evmonecoverage $argstring
+argstring="/tests/evmone_coverage.sh diff coverage_PATCH.lcov coverage_BASE.lcov /tests"
+docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 
 if [ $onlypatch -eq 0 ]; then
     rm -r $testpath/BASE_TESTS
