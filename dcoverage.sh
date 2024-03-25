@@ -9,7 +9,9 @@ rebuildImage () {
 }
 
 printHelp() {
-    echo "Usage \"./dcoverage.sh --base=testsA --patch=testsB --test_type=GeneralStateTests\""
+    echo "Usage \"./dcoverage.sh --base=testsA --patch=testsB\""
+    echo "Usage \"./dcoverage.sh --base=file.lcov --patch=testsB\""
+    echo "Usage \"./dcoverage.sh --testrepo --test_type=GeneralStateTests/stExample\""
     exit 0
 }
 
@@ -80,13 +82,17 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-
+testType="AUTO"
 testpath=$(pwd)/coverage
-if [[ -z "$base" || -z "$patch" || -z "$testType" ]]; then
+if [[ -z "$base" || -z "$patch" ]]; then
     if [ $testrepo -eq 0 ]; then
         echo "Error: Missing options!"
         printHelp
     else
+        if [[ -z "$testType" ]]; then
+            echo "Error: Missing options!"
+            printHelp
+        fi
         argstring="/tests/evmone_coverage.sh covertests /tests/tests $testType TESTREPO /tests"
         docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
         user=$(whoami)
@@ -96,16 +102,21 @@ if [[ -z "$base" || -z "$patch" || -z "$testType" ]]; then
 fi
 
 
-if [ $onlypatch -eq 1 ]; then
-    dirs=("PATCH_TESTS" "DIFF" "PATCH")
+if [[ -n "$patch" ]] && [[ "$patch" != *.lcov ]]; then
+    dirs=("PATCH_TESTS" "PATCH_TESTS/BC" "PATCH_TESTS/ST" "DIFF" "PATCH")
     for dir in "${dirs[@]}"; do
         dirpath="$testpath/$dir"
         rm -rf "$dirpath"
         mkdir -p "$dirpath"
     done
     cp $patch/* $testpath/PATCH_TESTS
-else
-    dirs=("BASE_TESTS" "PATCH_TESTS" "DIFF" "BASE" "PATCH")
+
+    argstring="/tests/evmone_coverage.sh cover /tests/PATCH_TESTS $testType PATCH /tests"
+    docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
+fi
+
+if [[ -n "$base" ]] && [[ "$base" != *.lcov ]]; then
+    dirs=("BASE_TESTS" "BASE_TESTS/BC" "BASE_TESTS/ST" "DIFF" "BASE")
     for dir in "${dirs[@]}"; do
         dirpath="$testpath/$dir"
         rm -rf "$dirpath"
@@ -118,16 +129,25 @@ else
     docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 fi
 
-argstring="/tests/evmone_coverage.sh cover /tests/PATCH_TESTS $testType PATCH /tests"
+
+basecoverfile="coverage_BASE.lcov"
+if [[ "$base" == *.lcov ]]; then
+    basecoverfile=$base
+fi
+patchcoverfile="coverage_PATCH.lcov"
+if [[ "$patch" == *.lcov ]]; then
+    patchcoverfile=$patch
+fi
+argstring="/tests/evmone_coverage.sh diff $patchcoverfile $basecoverfile /tests"
 docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 
-argstring="/tests/evmone_coverage.sh diff coverage_PATCH.lcov coverage_BASE.lcov /tests"
-docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 
-if [ $onlypatch -eq 0 ]; then
+if [[ -n "$patch" ]] && [[ "$patch" != *.lcov ]]; then
+    rm -r $testpath/PATCH_TESTS
+fi
+if [[ -n "$base" ]] && [[ "$base" != *.lcov ]]; then
     rm -r $testpath/BASE_TESTS
 fi
-rm -r $testpath/PATCH_TESTS
 
 user=$(whoami)
 sudo chown -R $user:$user $testpath
