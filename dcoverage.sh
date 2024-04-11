@@ -9,9 +9,13 @@ rebuildImage () {
 }
 
 printHelp() {
-    echo "Usage \"./dcoverage.sh --base=testsA --patch=testsB\""
-    echo "Usage \"./dcoverage.sh --base=file.lcov --patch=testsB\""
-    echo "Usage \"./dcoverage.sh --testrepo --test_type=GeneralStateTests/stExample\""
+    echo "Usage:"
+    echo "./dcoverage.sh --base=testsA --patch=testsB [--driver=retesteth|native]"
+    echo "./dcoverage.sh --base=file.lcov --patch=testsB"
+    echo "./dcoverage.sh --base=file.lcov --patch=fileb.lcov"
+    echo ""
+    echo "With --driver=retesteth (default) only:"
+    echo "./dcoverage.sh --testrepo --test_type=GeneralStateTests/stExample"
     exit 0
 }
 
@@ -51,6 +55,7 @@ patch=""
 testType=""
 onlypatch=0
 testrepo=0
+driver="retesteth"
 
 # Loop through all the arguments
 while [ "$#" -gt 0 ]; do
@@ -63,12 +68,16 @@ while [ "$#" -gt 0 ]; do
             patch="${1#*=}" # Extract the value part of the argument
             shift 1         # Move to the next argument
             ;;
-        --test_type=*)  # Match --patch="file"
-            testType="${1#*=}" # Extract the value part of the argument
-            shift 1         # Move to the next argument
+        --test_type=*)  # -t argument (GeneralStateTests or a specific test suite)
+            testType="${1#*=}"
+            shift 1
             ;;
-        --onlypatch)  # Match the --verbose option
-            onlypatch=1  # Set the flag to 1 (on)
+        --driver=*)
+            driver="${1#*=}"
+            shift 1
+            ;;
+        --onlypatch)  # Do not recalculate the BASE
+            onlypatch=1
             shift
             ;;
         --testrepo)
@@ -93,12 +102,16 @@ if [[ -z "$base" || -z "$patch" ]]; then
             echo "Error: Missing options!"
             printHelp
         fi
-        argstring="/tests/evmone_coverage.sh covertests /tests/tests $testType TESTREPO /tests"
+        argstring="/tests/evmone_coverage.sh covertests /tests/tests $driver $testType TESTREPO /tests"
         docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
         user=$(whoami)
         sudo chown -R $user:$user $testpath
         exit 0
     fi
+fi
+if [[ "$driver" != "retesteth" ]] && [[ "$driver" != "native" ]]; then
+        echo "Error: Unknown driver! Supported: --driver=retesteth|native"
+        printHelp
 fi
 
 
@@ -111,7 +124,7 @@ if [[ -n "$patch" ]] && [[ "$patch" != *.lcov ]]; then
     done
     cp $patch/* $testpath/PATCH_TESTS
 
-    argstring="/tests/evmone_coverage.sh cover /tests/PATCH_TESTS $testType PATCH /tests"
+    argstring="/tests/evmone_coverage.sh cover /tests/PATCH_TESTS $driver $testType PATCH /tests"
     docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 fi
 
@@ -125,7 +138,7 @@ if [[ -n "$base" ]] && [[ "$base" != *.lcov ]]; then
     cp $base/* $testpath/BASE_TESTS
     cp $patch/* $testpath/PATCH_TESTS
 
-    argstring="/tests/evmone_coverage.sh cover /tests/BASE_TESTS $testType BASE /tests"
+    argstring="/tests/evmone_coverage.sh cover /tests/BASE_TESTS $driver $testType BASE /tests"
     docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 fi
 
@@ -138,8 +151,9 @@ patchcoverfile="coverage_PATCH.lcov"
 if [[ "$patch" == *.lcov ]]; then
     patchcoverfile=$patch
 fi
+
 argstring="/tests/evmone_coverage.sh diff $patchcoverfile $basecoverfile /tests"
-docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
+difflog=$(docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring)
 
 
 if [[ -n "$patch" ]] && [[ "$patch" != *.lcov ]]; then
@@ -151,3 +165,47 @@ fi
 
 user=$(whoami)
 sudo chown -R $user:$user $testpath
+
+
+# ===================
+# CHECK LOST COVERAGE
+# ===================
+findDigitFromReport(){
+    lines=$1
+    str=$2
+    digit=$(echo "$lines" | grep -oP "$str.*?: \K\d+") 
+    if [[ -z $digit ]];then
+        digit="0"
+    fi
+    return $digit
+}
+
+coverageInfo=$(echo "$difflog" | awk '/Overall coverage rate:/,0')
+linesInfo=$(echo "$coverageInfo" | awk  '/lines/{flag=1} flag && !/functions/; /functions/{flag=0}')
+functionsInfo=$(echo "$coverageInfo" | awk '/functions/,0')
+
+echo ""
+echo "==============="
+echo "COVERAGE REPORT"
+echo $(pwd)"/coverage/DIFF/index.html"
+
+findDigitFromReport "$linesInfo" "GBC"
+echo "New covered Lines: $?"
+findDigitFromReport "$linesInfo" "LBC"
+LBC_LINES=$?
+
+findDigitFromReport "$functionsInfo" "GBC"
+echo "New covered function Paths: $?"
+findDigitFromReport "$functionsInfo" "LBC"
+LBC_FUNC=$?
+
+
+if [ "$LBC_LINES" != "0" ] || [ "$LBC_FUNC" != "0" ]; then
+    echo ""
+    echo "ERROR: coverage is lost!"
+    echo "Lost coverage Lines: $LBC_LINES"
+    echo "Lost coverage function Paths: $LBC_FUNC"
+    exit 1
+else
+    exit 0
+fi
