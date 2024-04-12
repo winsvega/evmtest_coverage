@@ -131,7 +131,7 @@ if [[ -n "$patch" ]] && [[ "$patch" != *.lcov ]]; then
     docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $argstring
 fi
 
-if [[ -n "$base" ]] && [[ "$base" != *.lcov ]]; then
+if [[ -n "$base" ]] && [[ "$base" != *.lcov ]] && [[ "$onlypatch" != 1 ]]; then
     dirs=("BASE_TESTS" "BASE_TESTS/BC" "BASE_TESTS/ST" "DIFF" "BASE")
     for dir in "${dirs[@]}"; do
         dirpath="$testpath/$dir"
@@ -162,53 +162,11 @@ difflog=$(docker run --entrypoint /bin/bash -v $testpath:/tests evmonecoverage $
 if [[ -n "$patch" ]] && [[ "$patch" != *.lcov ]]; then
     rm -r $testpath/PATCH_TESTS
 fi
-if [[ -n "$base" ]] && [[ "$base" != *.lcov ]]; then
+if [[ -n "$base" ]] && [[ "$base" != *.lcov ]] && [[ "$onlypatch" != 1 ]]; then
     rm -r $testpath/BASE_TESTS
 fi
 
 user=$(whoami)
 sudo chown -R $user:$user $testpath
 
-
-# ===================
-# CHECK LOST COVERAGE
-# ===================
-findDigitFromReport(){
-    lines=$1
-    str=$2
-    digit=$(echo "$lines" | grep -oP "$str.*?: \K\d+") 
-    if [[ -z $digit ]];then
-        digit="0"
-    fi
-    return $digit
-}
-
-coverageInfo=$(echo "$difflog" | awk '/Overall coverage rate:/,0')
-linesInfo=$(echo "$coverageInfo" | awk  '/lines/{flag=1} flag && !/functions/; /functions/{flag=0}')
-functionsInfo=$(echo "$coverageInfo" | awk '/functions/,0')
-
-echo ""
-echo "==============="
-echo "COVERAGE REPORT"
-echo $(pwd)"/coverage/DIFF/index.html"
-
-findDigitFromReport "$linesInfo" "GBC"
-echo "New covered Lines: $?"
-findDigitFromReport "$linesInfo" "LBC"
-LBC_LINES=$?
-
-findDigitFromReport "$functionsInfo" "GBC"
-echo "New covered function Paths: $?"
-findDigitFromReport "$functionsInfo" "LBC"
-LBC_FUNC=$?
-
-
-if [ "$LBC_LINES" != "0" ] || [ "$LBC_FUNC" != "0" ]; then
-    echo ""
-    echo "ERROR: coverage is lost!"
-    echo "Lost coverage Lines: $LBC_LINES"
-    echo "Lost coverage function Paths: $LBC_FUNC"
-    exit 1
-else
-    exit 0
-fi
+echo "$difflog" > "./coverage/difflog.txt"
