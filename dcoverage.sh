@@ -1,3 +1,5 @@
+#!/bin/bash
+
 buildImage () {
     docker build -t evmonecoverage .
     exit 0
@@ -86,6 +88,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         *)          # Match any other argument
             echo "Unknown option: $1"
+            printHelp
             exit 1
             ;;
     esac
