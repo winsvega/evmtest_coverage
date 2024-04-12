@@ -170,3 +170,4 @@ user=$(whoami)
 sudo chown -R $user:$user $testpath
 
 echo "$difflog" > "./coverage/difflog.txt"
+echo "$difflog"

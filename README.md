@@ -8,7 +8,7 @@ Docker that builds evmone in a coverage mode and an entry script that do the rep
 ./dcoverage.sh clean      -   remove all docker images and containers for sure (docker has issues removing the containers)
 ```
 
-# Main command: make a coverage report of how many lines got covered (green), lost (red) into ./converted/DIFF/index.html folder
+## Main command: make a coverage report of how many lines got covered (green), lost (red) into ./converted/DIFF/index.html folder
 ```
 ./dcoverage.sh --base=testsA --patch=testsB [--driver=retesteth|native]
 ./dcoverage.sh --base=file.lcov --patch=testsB
