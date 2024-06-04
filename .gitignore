@@ -1,4 +1,7 @@
-/coverage/PATCH
-/coverage/DIFF
-/coverage/BASE
-/coverage/TESTREPO
+/coverage/*
+/dockerhub/coverage/*
+/bc
+/testpath/*
+/testsA/*
+/testsB/*
+evmone.tar
