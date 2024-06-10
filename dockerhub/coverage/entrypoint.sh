@@ -89,10 +89,12 @@ sorttests() {
     # Subdirectories for classification
     DIR_BC="${DIR}/BC"
     DIR_ST="${DIR}/ST"
+    DIR_EF="${DIR}/EF"
 
     # Create the subdirectories if they don't already exist
     mkdir -p "$DIR_BC"
     mkdir -p "$DIR_ST"
+    mkdir -p "$DIR_EF"
 
     # Iterate over files in the directory
     for file in "$DIR"/*; do
@@ -103,9 +105,10 @@ sorttests() {
         if grep -q "genesis" "$file"; then
             # If file contains "genesis", move it to BC
             mv "$file" "$DIR_BC/"
-        else
-            # Otherwise, move it to ST
+        elif grep -q "currentCoinbase" "$file"; then
             mv "$file" "$DIR_ST/"
+        else
+            mv "$file" "$DIR_EF/"
         fi
     done
 }
@@ -127,18 +130,24 @@ then
         if [[ "$driver" == "retesteth" ]]; then
             cmd="retesteth -t GeneralStateTests -- --testfile $testpath/ST --clients evmone --testpath /dev/null"
             echo "$cmd"
-            eval "$cmd"    
+            eval "$cmd"
             cmd="retesteth -t BlockchainTests -- --testfile $testpath/BC --clients evmone --testpath /dev/null"
             echo "$cmd"
-            eval "$cmd"    
+            eval "$cmd"
+            cmd="retesteth -t EOFTests -- --testfile $testpath/EF --clients evmone --testpath /dev/null"
+            echo "$cmd"
+            eval "$cmd"
         fi
         if [[ "$driver" == "native" ]]; then
             cmd="evmone-statetest $testpath/ST"
             echo "$cmd"
-            eval "$cmd"    
+            eval "$cmd"
             cmd="evmone-blockchaintest $testpath/BC"
             echo "$cmd"
-            eval "$cmd"    
+            eval "$cmd"
+            cmd="evmone-eoftest $testpath/EF"
+            echo "$cmd"
+            eval "$cmd"
         fi
     else
         if [[ "$driver" == "retesteth" ]]; then
@@ -150,10 +159,13 @@ then
             sorttests
             cmd="evmone-statetest $testpath/ST"
             echo "$cmd"
-            eval "$cmd"    
+            eval "$cmd"
             cmd="evmone-blockchaintest $testpath/BC"
             echo "$cmd"
-            eval "$cmd"    
+            eval "$cmd"
+            cmd="evmone-eoftest $testpath/EF"
+            echo "$cmd"
+            eval "$cmd"
         fi
     fi
     capturecover
