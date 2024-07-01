@@ -18,7 +18,11 @@ RUN apt-get update \
 RUN apt-get remove -y cmake  \
     && ln -s /usr/bin/gcc-11 /usr/bin/gcc \
     && ln -s /usr/bin/g++-11 /usr/bin/g++ \
-    && ln -s /usr/bin/gcov-11 /usr/bin/gcov
+    && ln -s /usr/bin/gcov-11 /usr/bin/gcov \
+    && ln -s /usr/bin/x86_64-linux-gnu-gcc-11 /usr/bin/x86_64-linux-gnu-gcc \
+    && ln -s /usr/bin/gcov-dump-11 /usr/bin/gcov-dump \
+    && ln -s /usr/bin/gcov-tool-11 /usr/bin/gcov-tool
+
 
 # CMAKE LATEST
 RUN apt-get update \
@@ -44,11 +48,7 @@ RUN test -n "$EVMONE" \
 
 
 # LCOV
-RUN apt-get install --yes cpanminus perl psmisc \
-    && ln -s /usr/bin/x86_64-linux-gnu-gcc-11 /usr/bin/x86_64-linux-gnu-gcc \
-    && ln -s /usr/bin/gcov-dump-11 /usr/bin/gcov-dump \
-    && ln -s /usr/bin/gcov-tool-11 /usr/bin/gcov-tool
-
+RUN apt-get install --yes cpanminus perl psmisc
 RUN wget https://github.com/linux-test-project/lcov/releases/download/v2.0/lcov-2.0.tar.gz \
     && tar -xvf lcov-2.0.tar.gz \
     && cpanm Capture::Tiny DateTime \

@@ -22,11 +22,14 @@ RUN rm /usr/bin/gcc \
 # Retesteth
 RUN test -n "$RETESTETH" \
     && git clone $RETESTETH_SRC /retesteth \
-    && cd /retesteth && git fetch && git checkout $RETESTETH && mkdir /build && cd /build \
+    && cd /retesteth \
+    && git fetch && git checkout $RETESTETH && git submodule update --init --recursive \
+    && mkdir /build && cd /build \
     && cmake /retesteth -DCMAKE_BUILD_TYPE=Release \
     && make -j6 \
     && cp /build/retesteth/retesteth /usr/bin/retesteth \
     && rm -rf /build /retesteth /var/cache/* /root/.hunter/* \
     || echo "Retesteth is empty" > /usr/bin/retesteth
+
 
 ENTRYPOINT ["/usr/bin/retesteth"]
