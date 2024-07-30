@@ -1,7 +1,7 @@
 /coverage/*
-/dockerhub/coverage/*
 /bc
 /testpath/*
 /testsA/*
 /testsB/*
+/testsC/*
 evmone.tar

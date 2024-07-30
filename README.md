@@ -10,11 +10,7 @@ Docker that builds evmone in a coverage mode and an entry script that do the rep
 
 ## Main command: make a coverage report of how many lines got covered (green), lost (red) into ./converted/DIFF/index.html folder
 ```
-./dcoverage.sh --base=testsA --patch=testsB [--driver=retesteth|native]
-./dcoverage.sh --base=file.lcov --patch=testsB
-./dcoverage.sh --base=file.lcov --patch=fileb.lcov
-
-With --driver=retesteth (default) only:
-./dcoverage.sh --testrepo --test_type=GeneralStateTests/stExample
-
+./dcoverage.sh --tests=./testsA --mode=cover --outputname=BASE  [--driver=retesteth|native]
+./dcoverage.sh --tests=./testsB --mode=cover --outputname=PATCH [--driver=retesteth|native]
+./dcoverage.sh --mode=diff --basefile=coverage_BASE.lcov --patchfile=coverage_PATCH.lcov
 ```

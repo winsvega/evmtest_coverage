@@ -17,6 +17,10 @@ coverageInfo=$(echo "$difflog" | awk '/Overall coverage rate:/,0')
 linesInfo=$(echo "$coverageInfo" | awk  '/lines/{flag=1} flag && !/functions/; /functions/{flag=0}')
 functionsInfo=$(echo "$coverageInfo" | awk '/functions/,0')
 
+echo "LBC function hint"
+echo "==============="
+/printhint.sh /tests/DIFF
+
 echo ""
 echo "==============="
 echo "COVERAGE REPORT"
