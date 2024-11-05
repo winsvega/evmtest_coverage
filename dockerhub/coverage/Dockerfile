@@ -1,5 +1,5 @@
-FROM winsvega/retesteth:latest as retesteth
-FROM winsvega/evmone-coverage:latest
+FROM winsvega/retesteth:latest AS retesteth
+FROM evmone-coverage:latest
 
 COPY printhint.sh /printhint.sh
 COPY entrypoint.sh /entrypoint.sh

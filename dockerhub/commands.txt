@@ -1,4 +1,4 @@
-docker build -t evmone-coverage .
+DOCKER_BUILDKIT=1 docker build --build-arg BUILDKIT_PARALLELISM=16 -t evmone-coverage .
 docker tag evmone-coverage winsvega/evmone-coverage:latest
 docker push winsvega/evmone-coverage:latest
 
